@@ -179,11 +179,10 @@ function App() {
           return
         }
       }
-      // Fallback: open releases page if API 404/no asset
-      alert('Installer not available yet. Opening Releases page…')
-      window.open(releasesLatestPage, '_blank', 'noopener,noreferrer')
+      // Fallback: open releases page silently if no asset yet
+      window.open(releasesPage, '_blank', 'noopener,noreferrer')
     } catch {
-      window.open(releasesLatestPage, '_blank', 'noopener,noreferrer')
+      window.open(releasesPage, '_blank', 'noopener,noreferrer')
     }
   }
 
