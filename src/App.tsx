@@ -148,27 +148,42 @@ function App() {
     setLogs(prev => [...prev, { level, message }])
   }
   
-  function onDownloadApp() {
+  async function onDownloadApp() {
+    const releasesPage = 'https://github.com/iteducationcenter77-pixel/NoteCode/releases'
+    const releasesLatestPage = 'https://github.com/iteducationcenter77-pixel/NoteCode/releases/latest'
     try {
       const isWindows = navigator.userAgent.toLowerCase().includes('windows')
-      const directUrl = 'https://github.com/iteducationcenter77-pixel/NoteCode/releases/latest/download/NoteCode-Setup.exe'
-      const releasesUrl = 'https://github.com/iteducationcenter77-pixel/NoteCode/releases/latest'
-      const targetUrl = isWindows ? directUrl : releasesUrl
-      if (isWindows) {
-        // Trigger a direct download via an invisible anchor
-        const a = document.createElement('a')
-        a.href = targetUrl
-        a.setAttribute('download', 'NoteCode-Setup.exe')
-        a.style.display = 'none'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-      } else {
-        // Non-Windows: open releases page
-        window.open(targetUrl, '_blank', 'noopener,noreferrer')
+      if (!isWindows) {
+        window.open(releasesPage, '_blank', 'noopener,noreferrer')
+        return
       }
+      // Try GitHub API for the latest release asset
+      const apiUrl = 'https://api.github.com/repos/iteducationcenter77-pixel/NoteCode/releases/latest'
+      const resp = await fetch(apiUrl, { headers: { 'Accept': 'application/vnd.github+json' } })
+      if (resp.ok) {
+        const data = await resp.json()
+        const assets = Array.isArray(data?.assets) ? data.assets : []
+        const exe = assets.find((a: any) => {
+          const name = String(a?.name || '').toLowerCase()
+          return name.endsWith('.exe') && name.includes('notecode')
+        })
+        const downloadUrl = exe?.browser_download_url
+        if (downloadUrl) {
+          const a = document.createElement('a')
+          a.href = String(downloadUrl)
+          a.setAttribute('download', 'NoteCode-Setup.exe')
+          a.style.display = 'none'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          return
+        }
+      }
+      // Fallback: open releases page if API 404/no asset
+      alert('Installer not available yet. Opening Releases page…')
+      window.open(releasesLatestPage, '_blank', 'noopener,noreferrer')
     } catch {
-      window.open('https://github.com/iteducationcenter77-pixel/NoteCode/releases/latest', '_blank', 'noopener,noreferrer')
+      window.open(releasesLatestPage, '_blank', 'noopener,noreferrer')
     }
   }
 
