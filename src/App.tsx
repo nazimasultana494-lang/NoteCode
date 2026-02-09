@@ -343,6 +343,7 @@ function App() {
       runInIframe()
       return
     }
+    // Compiled languages: only supported in desktop app
     setShowRun(true)
     setActiveTab('console')
     setLogs([])
@@ -384,7 +385,7 @@ function App() {
       if (/Electron\//.test(ua)) {
         appendLog('warn', 'Desktop detected but API missing. Preload may have failed; try restarting Electron.')
       } else {
-        appendLog('warn', 'Desktop not detected. Start the desktop app (npm run electron:dev) and ensure compilers are installed (JDK, GCC/G++).')
+        appendLog('warn', 'Web version supports HTML/CSS/JavaScript Run. For Java/C/C++, please use the NoteCode desktop app.')
       }
     }
   }
@@ -415,7 +416,12 @@ function App() {
         <button className="button" onClick={onOpen}>Open</button>
         <button className="button" onClick={onSave}>Save</button>
         <button className="button" onClick={onSaveAs}>Save As</button>
-        <button className="button" onClick={onRun}>Run</button>
+        <button
+          className="button"
+          onClick={onRun}
+          disabled={!isElectronEnv() && (language === 'java' || language === 'c' || language === 'cpp')}
+          title={!isElectronEnv() && (language === 'java' || language === 'c' || language === 'cpp') ? 'Run for Java/C/C++ is available in the desktop app' : 'Run'}
+        >Run</button>
         <select className="select" value={language} onChange={e => setLanguage(e.target.value as LangId)}>
           {LANGS.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>
