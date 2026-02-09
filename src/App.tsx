@@ -524,6 +524,29 @@ function App() {
         // Try web compile via Piston
         const p = detectPromptFromSource(language as any, doc)
         setPromptText(p || '')
+        // Simple input validator for typical scanf/cin/Scanner patterns
+        const src = String(doc || '')
+        const expectsInput = /scanf\s*\(|\bcin\b|System\.in|Scanner\b/.test(src)
+        if (expectsInput) {
+          const raw = String(stdinInput || '').trim()
+          if (!raw) {
+            appendLog('warn', 'Input required. Provide all values separated by newlines or spaces. Example: for n=3 enter:\n3\n10\n20\n30')
+            return
+          }
+          const tokens = raw.split(/\s+/).map(t => Number(t)).filter(n => !Number.isNaN(n))
+          // Heuristic: if code reads initial count into n, require n+1 tokens
+          if (/scanf\s*\(\s*\"%d\"\s*,\s*&\s*n\s*\)/.test(src)) {
+            const n = tokens[0]
+            if (typeof n === 'number' && Number.isFinite(n)) {
+              const needed = (n + 1)
+              if (tokens.length < needed) {
+                const missing = needed - tokens.length
+                appendLog('warn', 'You entered n=' + n + '. Please provide ' + missing + ' more number(s) after n, each on a new line or separated by spaces.')
+                return
+              }
+            }
+          }
+        }
         const res = await runWebCompile(language as any, doc, stdinInput)
         if (res.stderr) appendLog('error', res.stderr)
         if (res.stdout) appendLog('log', res.stdout)
