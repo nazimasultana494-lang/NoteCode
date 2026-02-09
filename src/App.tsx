@@ -148,6 +148,43 @@ function App() {
     setLogs(prev => [...prev, { level, message }])
   }
 
+  async function runWebCompile(lang: 'java' | 'c' | 'cpp', source: string, stdin: string) {
+    try {
+      const endpoint = 'https://emkc.org/api/v2/piston/execute'
+      let language = lang === 'cpp' ? 'cpp' : (lang === 'c' ? 'c' : 'java')
+      const files = [
+        {
+          name: lang === 'java' ? 'Main.java' : (lang === 'cpp' ? 'main.cpp' : 'main.c'),
+          content: source
+        }
+      ]
+      const body = {
+        language,
+        version: 'latest',
+        files,
+        stdin: stdin || ''
+      }
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      })
+      const json = await resp.json()
+      let out = ''
+      let err = ''
+      if (json?.compile?.stdout) out += json.compile.stdout
+      if (json?.compile?.stderr) err += json.compile.stderr
+      if (json?.run?.stdout) out += json.run.stdout
+      if (json?.run?.stderr) err += json.run.stderr
+      const exitCode = typeof json?.run?.code === 'number' ? json.run.code : 0
+      return { stdout: out, stderr: err, exitCode }
+    } catch (e: any) {
+      return { stdout: '', stderr: String(e?.message || e), exitCode: -1 }
+    }
+  }
+
   async function onCheckTools() {
     if (!isElectronEnv()) {
       appendLog('warn', 'Compiler check requires desktop app. Launch via npm run electron:dev.')
@@ -343,7 +380,7 @@ function App() {
       runInIframe()
       return
     }
-    // Compiled languages: only supported in desktop app
+    // Compiled languages: web fallback via Piston API
     setShowRun(true)
     setActiveTab('console')
     setLogs([])
@@ -385,7 +422,11 @@ function App() {
       if (/Electron\//.test(ua)) {
         appendLog('warn', 'Desktop detected but API missing. Preload may have failed; try restarting Electron.')
       } else {
-        appendLog('warn', 'Web version supports HTML/CSS/JavaScript Run. For Java/C/C++, please use the NoteCode desktop app.')
+        // Try web compile via Piston
+        const res = await runWebCompile(language as any, doc, stdinInput)
+        if (res.stderr) appendLog('error', res.stderr)
+        if (res.stdout) appendLog('log', res.stdout)
+        if (!res.stdout && !res.stderr) appendLog('warn', 'No output. If issues persist, use the NoteCode desktop app for full compiler support.')
       }
     }
   }
@@ -419,8 +460,7 @@ function App() {
         <button
           className="button"
           onClick={onRun}
-          disabled={!isElectronEnv() && (language === 'java' || language === 'c' || language === 'cpp')}
-          title={!isElectronEnv() && (language === 'java' || language === 'c' || language === 'cpp') ? 'Run for Java/C/C++ is available in the desktop app' : 'Run'}
+          title={!isElectronEnv() && (language === 'java' || language === 'c' || language === 'cpp') ? 'Runs via web API (Piston). For full features, use desktop app.' : 'Run'}
         >Run</button>
         <select className="select" value={language} onChange={e => setLanguage(e.target.value as LangId)}>
           {LANGS.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}

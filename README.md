@@ -74,6 +74,11 @@ If you host under a subpath, the Vite `base` is set to `./` so relative assets r
 - Netlify: set build command to `npm run build` and publish directory to `dist`.
 - Vercel: set framework “Vite”, build command `npm run build`, output `dist`.
 
+## Web Run for Java/C/C++
+- The web version uses the public Piston API to compile/run Java, C, and C++ in-browser.
+- For full features (interactive stdin, larger programs, local toolchains), use the desktop app.
+- If network blocks the API, runs may fail; desktop app will still work with auto-installed toolchains.
+
 ## Notes
 - C/C++ highlighting uses CodeMirror's `lang-cpp` which covers both.
 - Desktop app compiles/runs Java/C/C++ using installed or auto-installed toolchains.
