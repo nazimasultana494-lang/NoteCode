@@ -1,0 +1,45 @@
+name: Build and Release NoteCode (Windows)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web
+        run: npm run build
+
+      - name: Package Windows installer
+        run: npm run package:win
+
+      - name: Verify installer exists
+        run: |
+          if (!(Test-Path "dist-electron/NoteCode-Setup.exe")) {
+            Write-Error "Installer not found: dist-electron/NoteCode-Setup.exe"
+          }
+
+      - name: Create GitHub Release and upload asset
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist-electron/NoteCode-Setup.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
