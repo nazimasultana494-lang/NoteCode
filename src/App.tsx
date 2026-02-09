@@ -147,6 +147,18 @@ function App() {
   function appendLog(level: 'log' | 'warn' | 'error', message: string) {
     setLogs(prev => [...prev, { level, message }])
   }
+  
+  function onDownloadApp() {
+    try {
+      const isWindows = navigator.userAgent.toLowerCase().includes('windows')
+      const directUrl = 'https://github.com/iteducationcenter77-pixel/NoteCode/releases/latest/download/NoteCode-Setup.exe'
+      const releasesUrl = 'https://github.com/iteducationcenter77-pixel/NoteCode/releases/latest'
+      const targetUrl = isWindows ? directUrl : releasesUrl
+      window.open(targetUrl, '_blank', 'noopener,noreferrer')
+    } catch {
+      window.open('https://github.com/iteducationcenter77-pixel/NoteCode/releases/latest', '_blank', 'noopener,noreferrer')
+    }
+  }
 
   async function runWebCompile(lang: 'java' | 'c' | 'cpp', source: string, stdin: string) {
     try {
@@ -473,6 +485,7 @@ function App() {
         <button className="button" onClick={onOpen}>Open</button>
         <button className="button" onClick={onSave}>Save</button>
         <button className="button" onClick={onSaveAs}>Save As</button>
+        <button className="button" onClick={onDownloadApp} title="Download the desktop app for Windows">Download App</button>
         <button
           className="button"
           onClick={onRun}
