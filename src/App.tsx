@@ -35,6 +35,8 @@ function App() {
   const [stdinInput, setStdinInput] = useState<string>('')
   const [runSessionId, setRunSessionId] = useState<string>('')
   const [isRunning, setIsRunning] = useState<boolean>(false)
+  const [promptText, setPromptText] = useState<string>('')
+  const [desktopPrompt, setDesktopPrompt] = useState<string>('')
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
   
 
@@ -146,6 +148,36 @@ function App() {
 
   function appendLog(level: 'log' | 'warn' | 'error', message: string) {
     setLogs(prev => [...prev, { level, message }])
+  }
+  
+  function detectPromptFromSource(lang: 'java' | 'c' | 'cpp', src: string) {
+    try {
+      const lines = String(src || '').split(/\r?\n/)
+      const inputIdx = lines.findIndex(l => {
+        const s = l.trim()
+        if (lang === 'c') return /\bscanf\s*\(/.test(s)
+        if (lang === 'cpp') return /\bcin\b/.test(s)
+        return /System\.in|Scanner\b/.test(s)
+      })
+      if (inputIdx === -1) return ''
+      const start = Math.max(0, inputIdx - 5)
+      for (let i = inputIdx - 1; i >= start; i--) {
+        const s = lines[i].trim()
+        if (lang === 'c') {
+          const m = s.match(/printf\s*\(\s*\"([\s\S]*?)\"/)
+          if (m && m[1]) return m[1]
+        } else if (lang === 'cpp') {
+          const m = s.match(/cout\s*<<\s*\"([\s\S]*?)\"/)
+          if (m && m[1]) return m[1]
+          const m2 = s.match(/std::cout\s*<<\s*\"([\s\S]*?)\"/)
+          if (m2 && m2[1]) return m2[1]
+        } else {
+          const m = s.match(/System\.(out)\.(print|println)\s*\(\s*\"([\s\S]*?)\"/)
+          if (m && m[3]) return m[3]
+        }
+      }
+    } catch {}
+    return ''
   }
   
   async function onDownloadApp() {
@@ -278,6 +310,12 @@ function App() {
       if (data && data.type === 'nc-console') {
         const msg = (data.args || []).join(' ')
         appendLog(data.level, msg)
+        try {
+          const lastLine = String(msg || '').split(/\r?\n/).filter(x => x.trim()).pop() || ''
+          if (lastLine && (/[:?]\s*$/.test(lastLine) || /\bEnter\b/i.test(lastLine))) {
+            setDesktopPrompt(lastLine)
+          }
+        } catch {}
       }
     }
     window.addEventListener('message', handler)
@@ -459,10 +497,17 @@ function App() {
           const text = stripAnsi(String(msg.text || ''))
           const level = msg.kind === 'stderr' ? 'error' : 'log'
           if (text) appendLog(level as any, text)
+          try {
+            const lastLine = String(text || '').split(/\r?\n/).filter(x => x.trim()).pop() || ''
+            if (lastLine && (/[:?]\s*$/.test(lastLine) || /\bEnter\b/i.test(lastLine))) {
+              setDesktopPrompt(lastLine)
+            }
+          } catch {}
         })
         const offExit = api.onRunExit((msg: any) => {
           if (!msg || msg.sessionId !== res.sessionId) return
           setIsRunning(false)
+          setDesktopPrompt('')
           // Minimal output: do not print exit code on success
           // Clean listeners
           try { offOutput && offOutput() } catch {}
@@ -477,6 +522,8 @@ function App() {
         appendLog('warn', 'Desktop detected but API missing. Preload may have failed; try restarting Electron.')
       } else {
         // Try web compile via Piston
+        const p = detectPromptFromSource(language as any, doc)
+        setPromptText(p || '')
         const res = await runWebCompile(language as any, doc, stdinInput)
         if (res.stderr) appendLog('error', res.stderr)
         if (res.stdout) appendLog('log', res.stdout)
@@ -557,7 +604,7 @@ function App() {
                 <div className="console">
                   {((isRunning) || (!isElectronEnv() && (language === 'java' || language === 'c' || language === 'cpp'))) && (
                     <div className="stdin-input">
-                      <label>{isRunning ? 'Type input and press Enter:' : 'Program input (stdin):'}</label>
+                      <label>{isRunning ? (desktopPrompt || 'Type input and press Enter:') : (promptText || 'Program input (stdin):')}</label>
                       <input
                         className="input"
                         placeholder={isRunning ? 'e.g. 5 7' : 'Provide input for scanf/cin/System.in here'}
@@ -566,7 +613,6 @@ function App() {
                         onChange={e => setStdinInput(e.target.value)}
                         autoFocus
                       />
-                      {/* hint removed per user request */}
                     </div>
                   )}
                   {logs.length === 0 ? <div className="log">No output yet.</div> : logs.map((l, i) => (
