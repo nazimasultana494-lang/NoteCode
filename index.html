@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NoteCode</title>
+    <meta name="description" content="NoteCode - modern notepad-like code editor" />
+    <link rel="icon" href="/icon.png" />
+    <style>
+      html, body, #root { height: 100%; }
+      body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      .fallback { display:flex; align-items:center; justify-content:center; height:100%; color:#6b7280; }
+      .error-banner { position:fixed; inset:0; background:#0b1020; color:#fca5a5; padding:16px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; white-space:pre-wrap; overflow:auto; }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div class="error-banner">JavaScript is disabled. Enable JavaScript to run NoteCode.</div>
+    </noscript>
+    <div id="root"><div class="fallback">Loading NoteCode…</div></div>
+    <script>
+      (function(){
+        function showError(msg){
+          try{
+            var root=document.getElementById('root');
+            if(root){
+              root.innerHTML='<div class="error-banner">'+msg+'</div>';
+            }
+          }catch(_){document.body.innerText=msg}
+        }
+        window.addEventListener('error', function(e){ showError('Runtime error: '+ (e.message||e.error||e.filename)); });
+        window.addEventListener('unhandledrejection', function(e){ showError('Unhandled promise rejection: '+ (e.reason&&e.reason.message?e.reason.message:String(e.reason))); });
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

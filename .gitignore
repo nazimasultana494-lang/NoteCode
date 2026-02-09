@@ -1,0 +1,19 @@
+node_modules/
+dist/
+dist-electron/
+dist-electron/**
+!dist-electron/builder-effective-config.yaml
+!dist-electron/builder-debug.yml
+
+# Electron unpacked outputs
+win-unpacked/
+
+# Installers and binaries
+*.exe
+*.msi
+*.zip
+
+# OS/Editor junk
+.DS_Store
+Thumbs.db
+*.log

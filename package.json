@@ -1,0 +1,71 @@
+{
+  "name": "notecode",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NoteCode - modern notepad-like code editor with syntax highlighting (Web + Electron)",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start:dev-5500": "vite --port 5500 --strictPort",
+    "preview:5500": "vite preview --port 5500 --strictPort",
+    "electron:dev": "node scripts/electron-dev.cjs",
+    "electron:build": "vite build && electron-builder",
+    "package:win": "vite build && electron-builder --win --x64"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@codemirror/commands": "^6.6.0",
+    "@codemirror/lang-cpp": "^6.0.2",
+    "@codemirror/lang-css": "^6.2.1",
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-java": "^6.0.1",
+    "@codemirror/lang-javascript": "^6.2.1",
+    "@codemirror/language": "^6.10.3",
+    "@codemirror/search": "^6.5.4",
+    "@codemirror/state": "^6.2.1",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@codemirror/view": "^6.29.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "node-pty": "^1.0.0",
+    "extract-zip": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.23",
+    "@vitejs/plugin-react": "^5.1.2",
+    "concurrently": "^8.2.2",
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "wait-on": "^7.2.0"
+  },
+  
+  "build": {
+    "productName": "NoteCode",
+    "appId": "com.notecode.app",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**",
+      "electron/**"
+    ],
+    "win": {
+      "artifactName": "NoteCode-${version}-Setup.exe",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}
