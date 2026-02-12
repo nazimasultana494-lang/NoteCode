@@ -1,4 +1,4 @@
-# NoteCode
+Fuck 
 
 Modern, notepad-like code editor with professional syntax highlighting. Web-based (runs in browser) and packaged as a Windows desktop app via Electron.
 
